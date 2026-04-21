@@ -1,0 +1,80 @@
+name: Bug report
+description: Something is broken — covers don't react, sensor missing, OAuth fails
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, check the [troubleshooting table](https://github.com/Fistacho/ha-netatmo-bubendorff#troubleshooting) in the README.
+
+  - type: input
+    id: integration-version
+    attributes:
+      label: Integration version
+      description: From Settings → Devices & Services → Netatmo (Bubendorff Fistacho).
+      placeholder: "1.2.0"
+    validations:
+      required: true
+
+  - type: input
+    id: ha-version
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.4.2"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: How did you install the integration?
+      options:
+        - HACS custom repository
+        - Manual copy into custom_components
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened
+      description: Describe the symptom and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: |
+        From Settings → System → Logs. Filter for `netatmo_bubendorff` or `pyatmo`.
+        Please paste the stack trace, not a screenshot.
+      render: shell
+
+  - type: input
+    id: shutter-model
+    attributes:
+      label: Shutter model
+      description: NBR / NBO / NBS — visible in Settings → Devices → Device info.
+      placeholder: "NBO"
+
+  - type: checkboxes
+    id: prereqs
+    attributes:
+      label: Before submitting
+      options:
+        - label: I removed the official Netatmo integration (it conflicts on the webhook URL)
+          required: false
+        - label: The shutter is visible and controllable in the Netatmo mobile app
+          required: true

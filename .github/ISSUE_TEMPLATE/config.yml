@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Home Assistant Netatmo integration docs
+    url: https://www.home-assistant.io/integrations/netatmo
+    about: OAuth setup, general Netatmo troubleshooting — the official integration docs apply here too.
+  - name: HA community — Bubendorff thread
+    url: https://community.home-assistant.io/t/bubendorff-idiamant-legrand-netatmo/265064
+    about: Discussion with other Bubendorff users, tips, feature ideas.
+  - name: Netatmo developer API docs
+    url: https://dev.netatmo.com/apidocumentation/control
+    about: What the Netatmo cloud API exposes — reference for "is feature X possible".
