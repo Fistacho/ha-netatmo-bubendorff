@@ -3,6 +3,37 @@
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.3.0] — 2026-04-21
+
+### Fixed in 1.3.0
+
+- **Tilt state was invisible to HA.** Netatmo's cloud never reports `-2`
+  in `current_position` after a tilt — it stays at 0/100 even though the
+  slats are physically tilted. The integration therefore showed every
+  tilted shutter as "closed", making automations unable to tell tilted
+  from fully-closed.
+
+### Added in 1.3.0
+
+- **Optimistic state update** — every `cover.*` command we issue now
+  writes its target into the pyatmo module in memory, so HA attributes
+  flip to the new state immediately instead of waiting for a webhook /
+  poll round-trip (which never brings tilt info anyway).
+- **`intended_state` attribute** on every cover entity — one of
+  `open` / `closed` / `tilted` / `stopped` / `unknown`. Easy to use in
+  automations:
+
+  ```yaml
+  condition: "{{ state_attr('cover.roleta', 'intended_state') == 'tilted' }}"
+  ```
+
+- **`netatmo_current_position` / `netatmo_target_position` attributes** —
+  raw values from the Netatmo API for debugging. Useful when tracing
+  webhook behaviour or physical-switch events.
+- **`current_cover_tilt_position`** is now driven by `target_position`
+  (which persists after a tilt), not by `current_position` (which does
+  not). Lovelace cards that read tilt position now render correctly.
+
 ## [1.2.1] — 2026-04-21
 
 ### Added in 1.2.1
