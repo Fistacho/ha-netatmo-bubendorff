@@ -45,19 +45,66 @@ Values like `30%` or `75%` are rejected by the hardware. Exposing a 0-100 slider
 
 ### Configure
 
-Authorization flow is identical to the official Netatmo integration — use the
-official guide for creating the Netatmo developer app and obtaining your
-`client_id` / `client_secret`:
+OAuth flow is identical to the official Netatmo integration. The full steps:
 
-➡️ **<https://www.home-assistant.io/integrations/netatmo/#prerequisites>**
+#### 1. Create (or reuse) a Netatmo developer app
 
-When you reach the "Add Application Credentials" step in that guide, pick
-**Netatmo (Bubendorff Fistacho)** as the integration instead of the built-in
-Netatmo. Everything else (Netatmo dev-portal app, redirect URI, scopes) is
-the same.
+1. Go to **<https://dev.netatmo.com/apps>** and sign in with your normal
+   Netatmo account (same one as in the mobile app).
+2. If you already created an app for the official Netatmo / iDiamant
+   integration — reuse it. **The same Client ID / Secret works here.**
+3. Otherwise click **Create** and fill:
+   - **App name:** anything, e.g. `Home Assistant`
+   - **Description:** anything
+   - **Data Protection Officer name + email:** your own
+   - **Company:** Private
+4. On the app page, verify the **Redirect URI** contains:
 
-Then: **Settings → Devices & Services → Add integration → Netatmo (Bubendorff
-Fistacho)** → OAuth login → done.
+   ```text
+   https://my.home-assistant.io/redirect/oauth
+   ```
+
+   Add it if missing — OAuth will fail with "invalid redirect" otherwise.
+   Click **Save**.
+5. Note your **Client ID** and **Client Secret** (click the 👁 icon to
+   reveal the secret) — you'll paste them into HA in a moment.
+
+#### 2. Add credentials to Home Assistant
+
+Two entry points, same result:
+
+**Option A — via the "Enter application credentials" dialog** (shown
+automatically when you first add the integration):
+
+- **Name:** anything, e.g. `Netatmo Bubendorff`
+- **OAuth Client ID:** *(paste from dev.netatmo.com)*
+- **OAuth Client Secret:** *(paste from dev.netatmo.com)*
+- Click **Add**
+
+**Option B — pre-configure via Settings:**
+
+- **Settings → Devices & Services → ⋮ (top right) → Application Credentials**
+- **Add application credential**
+- Choose integration: **Netatmo (Bubendorff Fistacho)**
+- Fill the same fields as above
+
+#### 3. Add the integration
+
+1. **Settings → Devices & Services → Add integration** → search
+   **Netatmo (Bubendorff Fistacho)**
+2. HA opens Netatmo's OAuth login page → click **YES, I ACCEPT**
+3. You're redirected back to HA → integration loads → devices appear
+   (shutters, cameras, thermostats, lights — all your Netatmo devices)
+
+#### Troubleshooting
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| "Invalid redirect URI" | Redirect URI missing in Netatmo app | Step 1.4 — add the URI and Save |
+| Loops back to login | Netatmo session cache | Log out at dev.netatmo.com, retry |
+| "Integration not found" | HACS not restarted | Restart HA after HACS install |
+| No shutters visible | Devices not in the Netatmo home | Check Netatmo mobile app — confirm Bubendorff is paired |
+| `update.*_update` shows version but no entities | Config entry needs reload | **Settings → Devices & Services → Netatmo (Bubendorff Fistacho) → ⋮ → Reload** |
 
 ---
 

@@ -1,0 +1,28 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Netatmo (Bubendorff Fistacho)",
+        "description": "Jeśli potrzebujesz pomocy z konfiguracją, zajrzyj tutaj: https://github.com/Fistacho/ha-netatmo-bubendorff",
+        "data": {
+          "username": "Nazwa użytkownika",
+          "password": "Hasło"
+        }
+      }
+    },
+    "error": {
+      "auth": "Nieprawidłowa nazwa użytkownika lub hasło."
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "data": {
+          "binary_sensor": "Czujnik binarny włączony",
+          "sensor": "Czujnik włączony",
+          "cover": "Roleta włączona"
+        }
+      }
+    }
+  }
+}
