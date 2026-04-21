@@ -3,6 +3,23 @@
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.0] — 2026-04-21
+
+### Added in 1.2.0
+
+- **Brand icons** — `icon.png`, `icon@2x.png`, `logo.png`, `logo@2x.png`
+  in the repo root, sourced from `home-assistant/brands` core Netatmo
+  integration. HACS now shows the familiar orange Netatmo logo instead
+  of a generic placeholder.
+- **Translations:** `es.json` (Spanish), `de.json` (German),
+  `pl.json` (Polish) — added alongside existing `en` and `fr`.
+- **Expanded OAuth setup documentation** in README:
+  - Full `dev.netatmo.com/apps` walkthrough with the exact redirect URI
+  - Both routes for adding Application Credentials (from dialog, from
+    Settings menu)
+  - Troubleshooting table for the most common first-install errors
+    (invalid redirect, login loop, missing entities, reload-needed).
+
 ## [1.1.1] — 2026-04-21
 
 ### Fixed in 1.1.1
