@@ -3,6 +3,42 @@
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.4.0] — 2026-04-21
+
+### Added in 1.4.0
+
+- **`cover.set_cover_position` now works** (0–100 % slider in HA UI).
+  Bubendorff hardware only honours 0/100/-1/-2, but this version emulates
+  intermediate positions by sending OPEN or CLOSE and scheduling a STOP
+  after `travel_time × (distance / 100)` seconds. Accuracy is roughly
+  ±15 % — good enough for "open to 30 %" automations, not for precision.
+- **Persistent position tracker** (`position_store.py`). Every movement
+  writes the estimated position to `.storage/netatmo_bubendorff_positions_*`
+  with a `confidence` label: `known` (just hit 0/100), `estimated` (mid
+  travel), or `unknown` (first install, physical switch used). Survives
+  HA restarts.
+- **Options flow: per-cover travel time**. Settings → Devices & Services
+  → Netatmo (Bubendorff Fistacho) → Configure → "Shutter travel times".
+  A default applies to all shutters; each cover can be overridden.
+  Default: **11 seconds** (from 16 timed measurements across 4 shutters
+  of two different heights — the Netatmo API response time turned out
+  to be fixed and independent of physical size, so a single default
+  works reasonably for all sizes).
+- **Tilt transition safety**: if the shutter is in jalousie (target -2)
+  and the next command moves up (OPEN or an intermediate), the
+  integration first sends `close_tilt` and waits ~2 s to flatten the
+  slats, then chains the original command. Fixes hardware refusing to
+  open straight from tilt.
+- New entity attribute **`position_confidence`** and **`travel_time_seconds`**
+  surfaced for debugging and for automation conditions.
+
+### Notes
+
+The Netatmo cloud returns `current_position` as either 0 or 100 — it
+does not report tilt or intermediate stops. That is why this release
+maintains its own estimate rather than trusting the API round-trip
+time (which is a fixed ~11 s regardless of actual shutter size).
+
 ## [1.3.0] — 2026-04-21
 
 ### Fixed in 1.3.0

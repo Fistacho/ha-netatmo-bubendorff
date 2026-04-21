@@ -8,12 +8,35 @@ MANUFACTURER = "Netatmo"
 DEFAULT_ATTRIBUTION = f"Data provided by {MANUFACTURER}"
 
 # Bubendorff shutter target_position special values (Netatmo API).
-# Bubendorff shutters support ONLY these 4 discrete states — there is no 0-100
-# continuous control, even though the API accepts integers in that range.
+# The hardware only honours open/closed/stop/preferred — intermediate 0-100
+# values are rejected. We emulate intermediate positions by sending an
+# open or close and then a stop after a time proportional to the requested
+# position (see cover.async_set_cover_position).
 SHUTTER_POSITION_CLOSED = 0
 SHUTTER_POSITION_OPEN = 100
 SHUTTER_POSITION_STOP = -1
 SHUTTER_POSITION_PREFERRED = -2  # Jalousie/slats mode for Bubendorff
+
+# Options-flow keys (stored per config entry in entry.options).
+CONF_TRAVEL_TIMES = "travel_times"           # dict: entity_id -> seconds
+CONF_DEFAULT_TRAVEL_TIME = "default_travel_time"
+
+# Defaults derived from measurements taken on 2026-04-21 across 4 shutters
+# (2 × 219cm + 2 × 165cm, 16 samples, open+close). Average 10.6s, stdev 0.8s.
+# Size does NOT affect API response time (API returns on a fixed-ish timeout,
+# not on physical completion) so a single default is used regardless of size.
+# Users can override per cover via options flow.
+DEFAULT_TRAVEL_TIME_SECONDS = 11.0
+DEFAULT_TILT_EXTRA_SECONDS = 3.0
+
+# Store (persistent position tracker) — one key per config entry.
+POSITION_STORE_VERSION = 1
+POSITION_STORE_KEY_PREFIX = "netatmo_bubendorff_positions"
+
+# Confidence labels for position estimates.
+POSITION_CONFIDENCE_KNOWN = "known"          # just arrived at 0 or 100
+POSITION_CONFIDENCE_ESTIMATED = "estimated"  # computed from time + direction
+POSITION_CONFIDENCE_UNKNOWN = "unknown"      # HA restart, physical button, first use
 
 PLATFORMS = [
     Platform.CAMERA,

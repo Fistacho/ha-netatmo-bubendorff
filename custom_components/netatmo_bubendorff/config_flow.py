@@ -13,17 +13,24 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_SHOW_ON_MAP, CONF_UUID
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
-from homeassistant.helpers import config_entry_oauth2_flow, config_validation as cv
+from homeassistant.helpers import (
+    config_entry_oauth2_flow,
+    config_validation as cv,
+    entity_registry as er,
+)
 
 from .const import (
     CONF_AREA_NAME,
+    CONF_DEFAULT_TRAVEL_TIME,
     CONF_LAT_NE,
     CONF_LAT_SW,
     CONF_LON_NE,
     CONF_LON_SW,
     CONF_NEW_AREA,
     CONF_PUBLIC_MODE,
+    CONF_TRAVEL_TIMES,
     CONF_WEATHER_AREAS,
+    DEFAULT_TRAVEL_TIME_SECONDS,
     DOMAIN,
 )
 
@@ -108,8 +115,73 @@ class NetatmoOptionsFlowHandler(config_entries.OptionsFlow):
         self.options.setdefault(CONF_WEATHER_AREAS, {})
 
     async def async_step_init(self, user_input: dict | None = None) -> FlowResult:
-        """Manage the Netatmo options."""
-        return await self.async_step_public_weather_areas()
+        """Top-level options menu."""
+        return self.async_show_menu(
+            step_id="init",
+            menu_options=["shutter_travel_times", "public_weather_areas"],
+        )
+
+    async def async_step_shutter_travel_times(
+        self, user_input: dict | None = None
+    ) -> FlowResult:
+        """Configure per-cover travel time used by set_cover_position emulation.
+
+        Netatmo's API doesn't expose motor speed, so we can't calibrate
+        automatically — users measure with a stopwatch and enter seconds here.
+        One default applies to all shutters; the per-entity override dict
+        lets users tune heavy / tall ones individually.
+        """
+        if user_input is not None:
+            default_time = user_input.get(
+                CONF_DEFAULT_TRAVEL_TIME, DEFAULT_TRAVEL_TIME_SECONDS
+            )
+            per_cover: dict[str, float] = {}
+            for key, value in user_input.items():
+                if key == CONF_DEFAULT_TRAVEL_TIME:
+                    continue
+                if value is None or value == "":
+                    continue
+                try:
+                    per_cover[key] = float(value)
+                except (TypeError, ValueError):
+                    continue
+            self.options[CONF_DEFAULT_TRAVEL_TIME] = float(default_time)
+            self.options[CONF_TRAVEL_TIMES] = per_cover
+            return self._create_options_entry()
+
+        # Discover cover entities bound to this config entry.
+        registry = er.async_get(self.hass)
+        covers = [
+            e for e in registry.entities.values()
+            if e.config_entry_id == self.config_entry.entry_id and e.domain == "cover"
+        ]
+
+        existing = self.options.get(CONF_TRAVEL_TIMES, {})
+        current_default = self.options.get(
+            CONF_DEFAULT_TRAVEL_TIME, DEFAULT_TRAVEL_TIME_SECONDS
+        )
+
+        schema: dict[Any, Any] = {
+            vol.Required(
+                CONF_DEFAULT_TRAVEL_TIME, default=float(current_default)
+            ): vol.All(vol.Coerce(float), vol.Range(min=1, max=120)),
+        }
+        for cover in covers:
+            schema[
+                vol.Optional(
+                    cover.entity_id,
+                    default=existing.get(cover.entity_id, current_default),
+                )
+            ] = vol.All(vol.Coerce(float), vol.Range(min=1, max=120))
+
+        return self.async_show_form(
+            step_id="shutter_travel_times",
+            data_schema=vol.Schema(schema),
+            description_placeholders={
+                "default": str(current_default),
+                "cover_count": str(len(covers)),
+            },
+        )
 
     async def async_step_public_weather_areas(
         self, user_input: dict | None = None
