@@ -3,6 +3,28 @@
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.1] — 2026-04-21
+
+### Added in 1.2.1
+
+- README badges (HACS, release version, license, issues, minimum HA version).
+- `.github/ISSUE_TEMPLATE/` with structured bug report and feature request
+  forms, plus links to the HA community Bubendorff thread and Netatmo API docs.
+- `.github/PULL_REQUEST_TEMPLATE.md` with a testing checklist.
+- `SUPPORT.md` explaining escalation order and documenting hardware / API
+  limits that are not fixable here (continuous 0-100 %, tilt angles,
+  obstacle readback, built-in weather sensors).
+- `docs/MIGRATION_PYATMO_9.md` — migration plan from the vendored
+  `pyatmo 7.5.0` to unvendored `pyatmo 9.x`. Includes verified API
+  breakage table, monkey-patch approach, step-by-step migration, rollback
+  procedure, and trigger conditions. **Not executed** — v1.2.1 still ships
+  with vendored 7.5.0; the plan is there for when we need it.
+
+### Changed in 1.2.1
+
+No functional code changes. Users updating from v1.2.0 will see no
+behavioural difference — this release is housekeeping only.
+
 ## [1.2.0] — 2026-04-21
 
 ### Added in 1.2.0
