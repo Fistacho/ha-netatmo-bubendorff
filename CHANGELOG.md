@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.4.2] — 2026-04-21
+
+### Changed in 1.4.2
+
+- **Default `travel_time_seconds` raised from 25 → 38** — matches a real
+  stopwatch measurement on a live Bubendorff installation (open 40.7 s,
+  close 38.0 s, different window heights produced the same motor time).
+  Users installing fresh now get sensible out-of-the-box behaviour; the
+  options flow is still the right place for per-cover precision tuning.
+
 ## [1.4.1] — 2026-04-21
 
 ### Fixed in 1.4.1 (critical)

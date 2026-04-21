@@ -31,10 +31,14 @@ CONF_DEFAULT_TRAVEL_TIME = "default_travel_time"
 #     widely — commonly 25–60 s depending on motor model and shutter
 #     height. That's what matters for set_cover_position timing.
 #
-# Default below is a middle-ground guess. Users MUST calibrate per cover
-# by timing a full open or close with a stopwatch and entering seconds
-# via Settings → Devices & Services → Configure → Shutter travel times.
-DEFAULT_TRAVEL_TIME_SECONDS = 25.0
+# Default 38 s is an empirical midpoint from a real Bubendorff installation
+# (@Fistacho, 2026-04-21): stopwatch-timed open 40.7 s (includes ~2.7 s
+# bridge wakeup) and close 38 s (wakeup negligible). Two different window
+# heights (165 cm and 219 cm) produced indistinguishable times — the motor
+# runs with constant angular speed and the slight linear difference is
+# swallowed by API/RF jitter. Users should still calibrate via the options
+# flow for best accuracy.
+DEFAULT_TRAVEL_TIME_SECONDS = 38.0
 DEFAULT_TILT_EXTRA_SECONDS = 3.0
 
 # Store (persistent position tracker) — one key per config entry.
