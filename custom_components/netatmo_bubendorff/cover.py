@@ -145,3 +145,8 @@ class NetatmoCover(NetatmoBase, CoverEntity):
         self._attr_current_cover_tilt_position = (
             100 if pos == SHUTTER_POSITION_PREFERRED else 0
         )
+
+        # Mark entity unavailable when the bridge reports the shutter offline.
+        # HA will grey out the tile and block service calls — better than a
+        # silent NOP on a dead device.
+        self._attr_available = bool(getattr(self._cover, "reachable", True))

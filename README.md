@@ -72,6 +72,61 @@ This uses a **different domain** (`netatmo_bubendorff`) so Home Assistant will l
 
 ---
 
+## Services
+
+### `netatmo_bubendorff.set_shutters_batch`
+
+Move multiple shutters in a **single Netatmo API call**. Much faster than
+firing N separate `cover.*` services — and friendlier to the account-level
+rate limit (important for "close all" automations at sunset).
+
+```yaml
+service: netatmo_bubendorff.set_shutters_batch
+data:
+  entity_id:
+    - cover.roleta
+    - cover.roleta_2
+    - cover.roleta_3
+    - cover.roleta_4
+  target_position: "0"   # 100=open, 0=closed, -1=stop, -2=jalousie
+```
+
+Mixed targets (different positions per shutter) are not supported in one
+call — call the service once per target group.
+
+---
+
+## Physical button / app events
+
+Every webhook push from Netatmo cloud fires the `netatmo_event` event on the
+HA bus, including shutter state changes triggered by the **physical wall
+switch** or the official Netatmo mobile app. You can trigger automations
+directly from those events.
+
+Debug what your home sends:
+
+```yaml
+# Dev Tools → Events → listen to: netatmo_event
+```
+
+Example automation — react when someone opens roleta manually:
+
+```yaml
+- alias: "Roleta salon opened manually — turn on lamp"
+  trigger:
+    platform: event
+    event_type: netatmo_event
+  condition:
+    - "{{ trigger.event.data.device_id == '<device_id_of_your_shutter>' }}"
+    - "{{ trigger.event.data.data.push_type is defined }}"
+  action:
+    - service: light.turn_on
+      target:
+        entity_id: light.salon
+```
+
+---
+
 ## Lovelace example
 
 ```yaml

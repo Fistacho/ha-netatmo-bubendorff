@@ -32,6 +32,7 @@ from datetime import datetime
 from http import HTTPStatus
 import logging
 import secrets
+from typing import Any
 
 import aiohttp
 
@@ -290,6 +291,68 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.services.async_register(DOMAIN, "register_webhook", register_webhook)
     hass.services.async_register(DOMAIN, "unregister_webhook", unregister_webhook)
+
+    async def set_shutters_batch(call: ServiceCall) -> None:
+        """Move several Bubendorff shutters with a SINGLE Netatmo API call.
+
+        Netatmo's setstate endpoint accepts a list of modules; using it for
+        N shutters costs 1 request instead of N — faster and friendlier to
+        the per-account rate limit (especially for 'close all' automations).
+        """
+        from homeassistant.helpers import entity_registry as er
+        from homeassistant.helpers.entity_component import EntityComponent
+
+        raw = call.data.get("entity_id", [])
+        entity_ids: list[str] = [raw] if isinstance(raw, str) else list(raw)
+        # services.yaml select selector returns strings — coerce to int.
+        target_position: int = int(call.data["target_position"])
+
+        cover_component: EntityComponent | None = hass.data.get("cover")
+        if cover_component is None:
+            _LOGGER.warning("cover platform not loaded; cannot run batch")
+            return
+
+        ent_reg = er.async_get(hass)
+        # Group payload entries per Netatmo home — each home = 1 API call.
+        modules_by_home: dict[Any, list[dict[str, Any]]] = {}
+
+        for entity_id in entity_ids:
+            entry_r = ent_reg.async_get(entity_id)
+            if (
+                entry_r is None
+                or entry_r.platform != DOMAIN
+                or entry_r.domain != "cover"
+            ):
+                _LOGGER.warning(
+                    "Skipping %s — not a %s cover entity", entity_id, DOMAIN
+                )
+                continue
+
+            cover_entity = cover_component.get_entity(entity_id)
+            if cover_entity is None or not hasattr(cover_entity, "_cover"):
+                continue
+
+            shutter = cover_entity._cover  # pyatmo Shutter module
+            modules_by_home.setdefault(shutter.home, []).append(
+                {
+                    "id": shutter.entity_id,
+                    "target_position": target_position,
+                    "bridge": shutter.bridge,
+                }
+            )
+
+        for home, modules in modules_by_home.items():
+            await home.async_set_state({"modules": modules})
+            _LOGGER.info(
+                "Batch-set %d shutter(s) to position %d on home %s",
+                len(modules),
+                target_position,
+                home.entity_id,
+            )
+
+    hass.services.async_register(
+        DOMAIN, "set_shutters_batch", set_shutters_batch
+    )
 
     entry.add_update_listener(async_config_entry_updated)
 

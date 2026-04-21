@@ -2,7 +2,7 @@
 set_camera_light:
   target:
     entity:
-      integration: netatmo
+      integration: netatmo_bubendorff
       domain: light
   fields:
     camera_light_mode:
@@ -17,7 +17,7 @@ set_camera_light:
 set_schedule:
   target:
     entity:
-      integration: netatmo
+      integration: netatmo_bubendorff
       domain: climate
   fields:
     schedule_name:
@@ -29,7 +29,7 @@ set_schedule:
 set_persons_home:
   target:
     entity:
-      integration: netatmo
+      integration: netatmo_bubendorff
       domain: camera
   fields:
     persons:
@@ -41,7 +41,7 @@ set_persons_home:
 set_person_away:
   target:
     entity:
-      integration: netatmo
+      integration: netatmo_bubendorff
       domain: camera
   fields:
     person:
@@ -51,3 +51,37 @@ set_person_away:
 
 register_webhook:
 unregister_webhook:
+
+set_shutters_batch:
+  name: Set shutters (batch)
+  description: >-
+    Move several Bubendorff shutters in a single Netatmo API call.
+    Much faster than multiple cover.* calls when operating many shutters
+    at once (e.g. "close all" scenes).
+  fields:
+    entity_id:
+      name: Shutter entities
+      description: One or more cover entities managed by this integration.
+      required: true
+      selector:
+        entity:
+          integration: netatmo_bubendorff_bubendorff
+          domain: cover
+          multiple: true
+    target_position:
+      name: Target position
+      description: >-
+        100 = open, 0 = closed, -1 = stop, -2 = jalousie (slats tilted).
+        Bubendorff hardware does not support values in between.
+      required: true
+      selector:
+        select:
+          options:
+            - label: Open (100)
+              value: "100"
+            - label: Close (0)
+              value: "0"
+            - label: Stop (-1)
+              value: "-1"
+            - label: Jalousie (-2)
+              value: "-2"
