@@ -1,0 +1,53 @@
+# Describes the format for available Netatmo services
+set_camera_light:
+  target:
+    entity:
+      integration: netatmo
+      domain: light
+  fields:
+    camera_light_mode:
+      required: true
+      selector:
+        select:
+          options:
+            - "on"
+            - "off"
+            - "auto"
+
+set_schedule:
+  target:
+    entity:
+      integration: netatmo
+      domain: climate
+  fields:
+    schedule_name:
+      example: Standard
+      required: true
+      selector:
+        text:
+
+set_persons_home:
+  target:
+    entity:
+      integration: netatmo
+      domain: camera
+  fields:
+    persons:
+      example: "[Alice, Bob]"
+      required: true
+      selector:
+        object:
+
+set_person_away:
+  target:
+    entity:
+      integration: netatmo
+      domain: camera
+  fields:
+    person:
+      example: Bob
+      selector:
+        text:
+
+register_webhook:
+unregister_webhook:

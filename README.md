@@ -1,4 +1,4 @@
-# Netatmo (Bubendorff jalousie) — Home Assistant integration
+# Netatmo (Bubendorff Fistacho) — Home Assistant integration
 
 A patched fork of the official [Home Assistant Netatmo](https://www.home-assistant.io/integrations/netatmo) integration that adds **jalousie / tilted slats control** for Bubendorff roller shutters (iDiamant with Netatmo).
 
@@ -34,8 +34,8 @@ Values like `30%` or `75%` are rejected by the hardware. Exposing a 0-100 slider
 ### Via HACS (recommended)
 
 1. HACS → Integrations → ⋮ → **Custom repositories**
-2. Add `https://github.com/LukaszZochowski/ha-netatmo-bubendorff` as type **Integration**
-3. Install **Netatmo (Bubendorff jalousie)**
+2. Add `https://github.com/Fistacho/ha-netatmo-bubendorff` as type **Integration**
+3. Install **Netatmo (Bubendorff Fistacho)**
 4. Restart Home Assistant
 
 ### Manual
@@ -45,8 +45,19 @@ Values like `30%` or `75%` are rejected by the hardware. Exposing a 0-100 slider
 
 ### Configure
 
-1. Settings → Devices & Services → **Add integration** → search **Netatmo (Bubendorff jalousie)**
-2. Complete the OAuth flow with your Netatmo account
+Authorization flow is identical to the official Netatmo integration — use the
+official guide for creating the Netatmo developer app and obtaining your
+`client_id` / `client_secret`:
+
+➡️ **<https://www.home-assistant.io/integrations/netatmo/#prerequisites>**
+
+When you reach the "Add Application Credentials" step in that guide, pick
+**Netatmo (Bubendorff Fistacho)** as the integration instead of the built-in
+Netatmo. Everything else (Netatmo dev-portal app, redirect URI, scopes) is
+the same.
+
+Then: **Settings → Devices & Services → Add integration → Netatmo (Bubendorff
+Fistacho)** → OAuth login → done.
 
 ---
 
@@ -79,7 +90,7 @@ Or the original button-card pattern still works — it calls `cover.open_cover_t
 
 ## How the jalousie integration works internally
 
-```
+```text
 HA command                 pyatmo method         Netatmo API target_position
 -----------                -------------         ---------------------------
 cover.open_cover           async_open()          100

@@ -1,0 +1,7 @@
+{
+  "name": "Netatmo (Bubendorff Fistacho)",
+  "render_readme": true,
+  "content_in_root": false,
+  "homeassistant": "2024.1.0",
+  "zip_release": false
+}
