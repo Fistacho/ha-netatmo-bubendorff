@@ -320,11 +320,17 @@ async def async_setup_entry(
             netatmo_device.device.device_category,
             netatmo_device.device.name,
         )
+        # Match on netatmo_name (falling back to key) because the module's
+        # `features` set holds pyatmo attribute names — and for some
+        # descriptions key differs from netatmo_name (e.g. rf_status vs
+        # rf_strength). Upstream bug: previous versions only checked `key`,
+        # so rf_status / wifi_status sensors were never created.
         async_add_entities(
             [
                 NetatmoSensor(netatmo_device, description)
                 for description in SENSOR_TYPES
-                if description.key in netatmo_device.device.features
+                if (description.netatmo_name or description.key)
+                in netatmo_device.device.features
             ]
         )
 

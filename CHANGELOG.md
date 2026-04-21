@@ -3,6 +3,17 @@
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.1] — 2026-04-21
+
+### Fixed in 1.1.1
+
+- `_create_sensor_entity` filter now matches on `netatmo_name` (falling
+  back to `key`) instead of only `key`. Upstream bug prevented
+  `rf_status` / `wifi_status` diagnostic sensors from ever being created
+  because `key` ≠ `netatmo_name` for those two descriptions — the
+  module's `features` set holds pyatmo attribute names, not entity keys.
+  Now the RF sensor promised in 1.1.0 actually shows up.
+
 ## [1.1.0] — 2026-04-21
 
 ### Added in 1.1.0
