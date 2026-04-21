@@ -3,6 +3,35 @@
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.4.1] — 2026-04-21
+
+### Fixed in 1.4.1 (critical)
+
+- **`set_cover_position` was massively undershooting.** User report:
+  request 50 %, shutter physically opens to ~10 %. Two bugs:
+
+  1. `await self._cover.async_open()` blocked ~10 s waiting for the
+     Netatmo API response before our STOP timer started counting. So
+     the motor would run for 10 s + the scheduled delay before STOP
+     actually arrived — completely ignoring the configured travel time.
+     Fixed: OPEN/CLOSE are now dispatched as background tasks
+     (`hass.async_create_task`) and the countdown starts immediately.
+  2. The default `travel_time` of 11 s reflected the **Netatmo API
+     round-trip**, not the **physical motor run time**. These are
+     unrelated — the API returns on a fixed-ish timeout regardless of
+     shutter size. Real motor travel time is commonly 25–60 s. Raised
+     default to 25 s and added a loud comment in `const.py` telling
+     users they must calibrate with a stopwatch.
+
+### Upgrade note
+
+If your set_position commands were behaving oddly in 1.4.0, after
+installing 1.4.1 go to **Settings → Devices & Services → Netatmo
+(Bubendorff Fistacho) → Configure → Shutter travel times** and enter
+the real physical time you measure with a stopwatch (time the shutter
+from the moment the motor starts to the moment it stops on its own
+during a full open).
+
 ## [1.4.0] — 2026-04-21
 
 ### Added in 1.4.0

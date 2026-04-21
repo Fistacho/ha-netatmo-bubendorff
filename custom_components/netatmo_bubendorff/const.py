@@ -21,12 +21,20 @@ SHUTTER_POSITION_PREFERRED = -2  # Jalousie/slats mode for Bubendorff
 CONF_TRAVEL_TIMES = "travel_times"           # dict: entity_id -> seconds
 CONF_DEFAULT_TRAVEL_TIME = "default_travel_time"
 
-# Defaults derived from measurements taken on 2026-04-21 across 4 shutters
-# (2 × 219cm + 2 × 165cm, 16 samples, open+close). Average 10.6s, stdev 0.8s.
-# Size does NOT affect API response time (API returns on a fixed-ish timeout,
-# not on physical completion) so a single default is used regardless of size.
-# Users can override per cover via options flow.
-DEFAULT_TRAVEL_TIME_SECONDS = 11.0
+# IMPORTANT: travel_time here is the PHYSICAL motor run time, NOT the
+# Netatmo API response time. Those are very different:
+#
+#   • Netatmo API round-trip for a shutter command ≈ 10–12 s regardless
+#     of shutter size (measured empirically across 219 cm and 165 cm
+#     shutters — no correlation with size, so it's a fixed API timeout).
+#   • Physical motor time to travel from fully closed to fully open ranges
+#     widely — commonly 25–60 s depending on motor model and shutter
+#     height. That's what matters for set_cover_position timing.
+#
+# Default below is a middle-ground guess. Users MUST calibrate per cover
+# by timing a full open or close with a stopwatch and entering seconds
+# via Settings → Devices & Services → Configure → Shutter travel times.
+DEFAULT_TRAVEL_TIME_SECONDS = 25.0
 DEFAULT_TILT_EXTRA_SECONDS = 3.0
 
 # Store (persistent position tracker) — one key per config entry.

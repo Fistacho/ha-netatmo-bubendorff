@@ -247,13 +247,21 @@ class NetatmoCover(NetatmoBase, CoverEntity):
         distance = abs(target - current)
         duration = travel_time * (distance / 100.0)
 
-        # Pick direction. Also fire the matching API command.
+        # Going up from a tilted state requires close_tilt first.
         if target > current:
-            # Going up from any state — must flatten slats first if in jalousie.
             await self._leave_tilt_if_needed()
-            await self._cover.async_open()
+
+        # CRITICAL: do NOT await the OPEN/CLOSE call. Netatmo's HTTP response
+        # takes ~10 s (and appears to be a fixed timeout, not tied to physical
+        # completion). If we awaited it, our STOP timer would start counting
+        # AFTER the motor has already been running for ~10 s — the shutter
+        # would overshoot the target by a huge margin. We dispatch the
+        # command as a background task and start counting immediately.
+        if target > current:
+            cmd_coro = self._cover.async_open()
         else:
-            await self._cover.async_close()
+            cmd_coro = self._cover.async_close()
+        self.hass.async_create_task(cmd_coro)
 
         self._movement_started_at = dt_util.utcnow()
         self._movement_from = current
