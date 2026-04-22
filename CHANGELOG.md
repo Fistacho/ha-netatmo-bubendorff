@@ -3,6 +3,19 @@
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.5.1] — 2026-04-22
+
+### Fixed in 1.5.1
+
+- **All three buttons (open / close / tilt) are now always active**, regardless
+  of the reported shutter state. Matches the behaviour of the Bubendorff
+  manufacturer app. Previously HA could grey out "open" when state was "open"
+  or "close" when state was "closed" — but since Netatmo API only ever returns
+  0 or 100 in `current_position` and never reflects tilt, those state-based
+  disables were based on wrong data. Fixed by always returning `None` for
+  `is_closed`, which HA treats as "unknown state" and leaves all buttons
+  enabled.
+
 ## [1.5.0] — 2026-04-21
 
 ### Changed in 1.5.0

@@ -204,7 +204,10 @@ class NetatmoCover(NetatmoBase, CoverEntity):
             else None
         )
         self._attr_current_cover_tilt_position = 100 if in_tilt else 0
-        self._attr_is_closed = (api_pos == SHUTTER_POSITION_CLOSED) and not in_tilt
+        # Keep state unknown so HA never disables any button — Netatmo API
+        # reports only 0/100 and never tilt, so any state-based disabling
+        # would be based on stale/wrong data. Matches manufacturer app behaviour.
+        self._attr_is_closed = None
 
         self._attr_extra_state_attributes = {
             "intended_state": _describe_state(api_pos, target),
