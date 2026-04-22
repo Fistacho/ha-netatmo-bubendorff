@@ -17,38 +17,11 @@ SHUTTER_POSITION_OPEN = 100
 SHUTTER_POSITION_STOP = -1
 SHUTTER_POSITION_PREFERRED = -2  # Jalousie/slats mode for Bubendorff
 
-# Options-flow keys (stored per config entry in entry.options).
-CONF_TRAVEL_TIMES = "travel_times"           # dict: entity_id -> seconds
-CONF_DEFAULT_TRAVEL_TIME = "default_travel_time"
-
-# IMPORTANT: travel_time here is the PHYSICAL motor run time, NOT the
-# Netatmo API response time. Those are very different:
-#
-#   • Netatmo API round-trip for a shutter command ≈ 10–12 s regardless
-#     of shutter size (measured empirically across 219 cm and 165 cm
-#     shutters — no correlation with size, so it's a fixed API timeout).
-#   • Physical motor time to travel from fully closed to fully open ranges
-#     widely — commonly 25–60 s depending on motor model and shutter
-#     height. That's what matters for set_cover_position timing.
-#
-# Default 38 s is an empirical midpoint from a real Bubendorff installation
-# (@Fistacho, 2026-04-21): stopwatch-timed open 40.7 s (includes ~2.7 s
-# bridge wakeup) and close 38 s (wakeup negligible). Two different window
-# heights (165 cm and 219 cm) produced indistinguishable times — the motor
-# runs with constant angular speed and the slight linear difference is
-# swallowed by API/RF jitter. Users should still calibrate via the options
-# flow for best accuracy.
-DEFAULT_TRAVEL_TIME_SECONDS = 38.0
-DEFAULT_TILT_EXTRA_SECONDS = 3.0
-
-# Store (persistent position tracker) — one key per config entry.
-POSITION_STORE_VERSION = 1
-POSITION_STORE_KEY_PREFIX = "netatmo_bubendorff_positions"
-
-# Confidence labels for position estimates.
-POSITION_CONFIDENCE_KNOWN = "known"          # just arrived at 0 or 100
-POSITION_CONFIDENCE_ESTIMATED = "estimated"  # computed from time + direction
-POSITION_CONFIDENCE_UNKNOWN = "unknown"      # HA restart, physical button, first use
+# Store: persists target_position per cover so tilt state (-2) survives
+# HA restarts. Netatmo cloud never returns -2 in current_position — it
+# always reports 0 or 100 — so we must remember tilt ourselves.
+STATE_STORE_VERSION = 1
+STATE_STORE_KEY_PREFIX = "netatmo_bubendorff_states"
 
 PLATFORMS = [
     Platform.CAMERA,

@@ -3,6 +3,51 @@
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.5.0] — 2026-04-21
+
+### Changed in 1.5.0
+
+- **Removed `cover.set_cover_position` (0–100 % slider).** The emulation
+  via timed STOP was producing unreliable results (typical error ±20 %) and
+  its complexity masked real state-tracking bugs. Bubendorff hardware only
+  supports 4 discrete positions; the integration now reflects that honestly.
+- **Removed per-cover travel time configuration** from the options flow.
+  The "Shutter travel times" menu entry is gone; the options flow now goes
+  directly to "Public weather areas".
+- **Simplified `cover.py`** — no more in-flight timer tasks, no more
+  position estimation arithmetic, no more fire-and-forget open/close.
+  Every command is now fully awaited before state is committed.
+- **Simplified state store** — `position_store.py` now persists only
+  `target_position` (an integer: 0, 100, -1, or -2) per cover instead of
+  the previous float position + confidence model. Storage key changed from
+  `netatmo_bubendorff_positions_*` to `netatmo_bubendorff_states_*`.
+
+### Fixed in 1.5.0
+
+- **Tilt state lost after HA restart.** Netatmo cloud never returns -2
+  (jalousie) in `current_position` — it always reports 0 or 100. Before
+  this release the pyatmo in-memory `target_position = -2` was lost on
+  every restart, making every tilted shutter appear "closed". The new
+  `StateStore` persists `target_position` to `.storage/` and restores it
+  on startup, so tilt state survives restarts correctly.
+
+### Removed in 1.5.0
+
+- `CoverEntityFeature.SET_POSITION` — no 0-100 % slider in the HA UI.
+- `async_set_cover_position`, `_stop_after`, `_estimate_position_now` from
+  `cover.py`.
+- `CONF_TRAVEL_TIMES`, `CONF_DEFAULT_TRAVEL_TIME`, `DEFAULT_TRAVEL_TIME_SECONDS`,
+  `DEFAULT_TILT_EXTRA_SECONDS` from `const.py`.
+- `position_confidence` and `travel_time_seconds` entity attributes.
+- `async_step_shutter_travel_times` from the options flow.
+
+### Upgrade note for 1.5.0
+
+After installing 1.5.0, HA will no longer show the position slider for
+Bubendorff covers. The options flow no longer has a "Shutter travel times"
+entry — if you had custom travel times configured they are silently ignored
+and can be cleaned up from Settings → Devices & Services → Configure.
+
 ## [1.4.2] — 2026-04-21
 
 ### Changed in 1.4.2
