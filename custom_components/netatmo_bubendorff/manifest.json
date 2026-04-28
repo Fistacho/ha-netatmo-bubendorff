@@ -1,17 +1,17 @@
 {
   "domain": "netatmo_bubendorff",
   "name": "Netatmo (Bubendorff Fistacho)",
-  "version": "1.5.1",
+  "after_dependencies": ["cloud", "media_source"],
   "codeowners": ["@Fistacho"],
   "config_flow": true,
-  "documentation": "https://github.com/Fistacho/ha-netatmo-bubendorff",
-  "issue_tracker": "https://github.com/Fistacho/ha-netatmo-bubendorff/issues",
-  "integration_type": "hub",
-  "iot_class": "cloud_polling",
   "dependencies": ["application_credentials", "webhook"],
-  "after_dependencies": ["cloud", "media_source"],
-  "loggers": ["pyatmo"],
+  "documentation": "https://github.com/Fistacho/ha-netatmo-bubendorff",
   "homekit": {
     "models": ["Healthy Home Coach", "Netatmo Relay", "Presence", "Welcome"]
-  }
+  },
+  "integration_type": "hub",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/Fistacho/ha-netatmo-bubendorff/issues",
+  "loggers": ["pyatmo"],
+  "version": "1.5.1"
 }
