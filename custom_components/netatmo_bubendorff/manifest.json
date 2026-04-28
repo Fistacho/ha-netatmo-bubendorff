@@ -13,5 +13,5 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/Fistacho/ha-netatmo-bubendorff/issues",
   "loggers": ["pyatmo"],
-  "version": "1.5.1"
+  "version": "1.5.3"
 }
