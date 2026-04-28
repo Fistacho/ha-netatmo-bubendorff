@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Netatmo (Bubendorff Fistacho)",
-        "description": "If you need help with the configuration have a look here: https://github.com/Fistacho/ha-netatmo-bubendorff",
+        "description": "If you need help with the configuration have a look here: {docs_url}",
         "data": {
           "username": "Username",
           "password": "Password"
