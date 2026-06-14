@@ -6,6 +6,8 @@
 [![GitHub issues](https://img.shields.io/github/issues/Fistacho/ha-netatmo-bubendorff)](https://github.com/Fistacho/ha-netatmo-bubendorff/issues)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.1%2B-41BDF5.svg)](https://www.home-assistant.io/)
 
+[![Add to HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Fistacho&repository=ha-netatmo-bubendorff&category=integration)
+
 A patched fork of the official [Home Assistant Netatmo](https://www.home-assistant.io/integrations/netatmo) integration that adds **jalousie / tilted slats control** for Bubendorff roller shutters (iDiamant with Netatmo).
 
 The official integration only exposes `open / close / stop`. Bubendorff shutters with adjustable slats also support a **jalousie position** (slats tilted so light passes through), mapped in Netatmo's API to `target_position: -2`. This integration exposes it via the standard HA cover `OPEN_TILT` / `CLOSE_TILT` commands.
