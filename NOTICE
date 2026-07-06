@@ -1,0 +1,17 @@
+ha-netatmo-bubendorff
+
+This project is licensed under the MIT License (see the LICENSE file).
+
+It contains portions derived from the following works, originally licensed
+under the Apache License 2.0:
+
+  - Home Assistant Netatmo integration
+    https://github.com/home-assistant/core
+  - pyatmo
+    https://github.com/cgtobi/pyatmo
+
+The Apache License 2.0 is available at:
+  https://www.apache.org/licenses/LICENSE-2.0
+
+Attribution to the original authors is retained in accordance with the terms
+of the Apache License 2.0.

@@ -2,11 +2,6 @@ MIT License
 
 Copyright (c) 2026 Łukasz Żochowski
 
-Portions derived from the Home Assistant Netatmo integration and from pyatmo,
-both originally licensed under the Apache License 2.0:
-  - Home Assistant Netatmo integration: https://github.com/home-assistant/core
-  - pyatmo: https://github.com/cgtobi/pyatmo
-
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
