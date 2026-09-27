@@ -3,6 +3,47 @@
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.6.0] — 2026-09-27
+
+Prep release for listing in official HACS/community channels. No user-facing
+behaviour change for Bubendorff shutters; addresses HA Core 2026.x
+deprecation warnings found during a pre-announcement review (log source: HA
+2026.9.3, research 2026-09-27).
+
+### Changed in 1.6.0
+
+- **Minimum Home Assistant version raised `2024.1.0` → `2026.8.0`**
+  (`hacs.json`). Required because the fixes below rely on APIs that only
+  exist from HA Core 2026.8 (`self.device_entry` populated pre-registry-scope
+  change) and 2026.7 (`UnitOfRatio`). Users on older HA will no longer see
+  this integration offered for install/update via HACS.
+
+### Fixed in 1.6.0
+
+- **`device_registry.async_get_device(identifiers=...)` deprecation**
+  (`netatmo_entity_base.py`). This call is deprecated since HA Core 2026.8
+  (devices are now scoped to a single config entry, so a bare identifier
+  lookup is ambiguous) and will stop working in 2027.8. Replaced with
+  `self.device_entry`, which `entity_platform` already resolves and assigns
+  before `async_added_to_hass()` runs — no registry lookup needed at all.
+- **`CONCENTRATION_PARTS_PER_MILLION` deprecation** (`sensor.py`). Replaced
+  with `UnitOfRatio.PARTS_PER_MILLION` (added HA Core 2026.7.0; the old
+  constant was deprecated in 2026.8.0 and is removed in 2027.8).
+
+### Security / risk note in 1.6.0
+
+- **Vendored `pyatmo` `sys.modules` override** (`__init__.py`) now logs a
+  one-time `_LOGGER.warning` if a *different* `pyatmo` module was already
+  imported into `sys.modules` before this integration loads, naming the
+  conflicting file path. The override itself still happens (still required —
+  this integration has no pip `pyatmo` requirement in `manifest.json` and
+  depends entirely on its bundled 7.5.0 fork), but the collision with the
+  official core `netatmo` integration (which expects pyatmo 9.x) is no
+  longer silent. Full fix is unvendoring, tracked in
+  `docs/MIGRATION_PYATMO_9.md` — evaluated as too invasive (touches every
+  file that does `import pyatmo`, every device category needs re-testing)
+  for this lightweight pre-release pass; not done here.
+
 ## [1.5.1] — 2026-04-22
 
 ### Fixed in 1.5.1

@@ -10,14 +10,48 @@ from __future__ import annotations
 #
 # Using importlib.util with an absolute path (__file__) instead of a hardcoded
 # relative string so the integration works no matter where the user mounts it.
+#
+# KNOWN RISK (evaluated 2026-09-27, see docs/MIGRATION_PYATMO_9.md): this
+# overwrites the *global*, process-wide `sys.modules["pyatmo"]` entry. If the
+# official core `netatmo` integration is also enabled in this Home Assistant
+# instance and imports the real pip-installed pyatmo (9.x) lazily *after* this
+# module has already run once, it will receive our vendored 7.5.0 fork
+# instead — pyatmo 9.x removed/renamed several modules this integration's own
+# code does not use but core `netatmo` does (see the migration doc's
+# breakage table), so that would break core `netatmo`, not us. We deliberately
+# do NOT attempt a scoped/meta-path fix here (e.g. hijacking only imports
+# performed by this package) — that requires call-stack introspection in a
+# sys.meta_path finder, which is fragile and out of proportion for a
+# lightweight pass. Full remediation is unvendoring per the migration doc.
+# Until then, we can only make the collision observable instead of silent.
 import importlib.util
+import logging
 import os
 import sys
+
+_LOGGER = logging.getLogger(__name__)
 
 _PKG_DIR = os.path.dirname(os.path.abspath(__file__))
 _VENDORED_PYATMO_INIT = os.path.join(_PKG_DIR, "pyatmo", "__init__.py")
 
 if os.path.isfile(_VENDORED_PYATMO_INIT):
+    _existing_pyatmo = sys.modules.get("pyatmo")
+    _existing_file = getattr(_existing_pyatmo, "__file__", None)
+    if _existing_pyatmo is not None and (
+        _existing_file is None
+        or not os.path.abspath(_existing_file).startswith(_PKG_DIR)
+    ):
+        _LOGGER.warning(
+            "Netatmo (Bubendorff Fistacho): a different 'pyatmo' package was "
+            "already imported (%s) before this integration loaded. It is "
+            "about to be replaced in sys.modules with this integration's "
+            "bundled pyatmo 7.5.0 fork for the rest of this Home Assistant "
+            "process. If you also use the official 'netatmo' integration in "
+            "this instance, it may break as a result — see "
+            "docs/MIGRATION_PYATMO_9.md in this integration's repository.",
+            _existing_file or "<unknown location>",
+        )
+
     _spec = importlib.util.spec_from_file_location(
         "pyatmo",
         _VENDORED_PYATMO_INIT,
@@ -30,7 +64,6 @@ if os.path.isfile(_VENDORED_PYATMO_INIT):
 
 from datetime import datetime
 from http import HTTPStatus
-import logging
 import secrets
 from typing import Any
 
@@ -94,8 +127,6 @@ from .const import (
 )
 from .data_handler import NetatmoDataHandler
 from .webhook import async_handle_webhook
-
-_LOGGER = logging.getLogger(__name__)
 
 CONFIG_SCHEMA = vol.Schema(
     vol.All(

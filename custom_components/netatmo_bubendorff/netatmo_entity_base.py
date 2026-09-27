@@ -9,7 +9,6 @@ from pyatmo.modules.device_types import (
 )
 
 from homeassistant.core import callback
-from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity
 
@@ -70,8 +69,14 @@ class NetatmoBase(Entity):
             ):
                 await self.data_handler.unsubscribe(signal_name, None)
 
-        registry = dr.async_get(self.hass)
-        if device := registry.async_get_device(identifiers={(DOMAIN, self._id)}):
+        # `device_registry.async_get_device(identifiers=...)` is deprecated
+        # since HA Core 2026.8 (devices are now scoped to a single config
+        # entry, so a bare identifier lookup is ambiguous) and is slated for
+        # removal in 2027.8. `entity_platform` already resolves and assigns
+        # `self.device_entry` for us *before* `async_added_to_hass()` runs,
+        # so we read that instead of doing our own registry lookup.
+        # See: https://developers.home-assistant.io/blog/2026/07/21/device-registry-single-config-entry/
+        if (device := self.device_entry) is not None:
             self.hass.data[DOMAIN][DATA_DEVICE_IDS][self._id] = device.id
 
         self.async_update_callback()
