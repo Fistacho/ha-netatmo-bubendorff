@@ -3,6 +3,35 @@
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.6.1] — 2026-10-01
+
+Self-healing after a transient Netatmo outage. Incident: HA restarted while
+`api.netatmo.com` answered 503; the config entry showed `loaded` but all
+covers stayed `unavailable` for 8 hours until a manual reload. No change to
+`unique_id` / `entity_id`, no change in the happy path.
+
+### Fixed in 1.6.1
+
+- **Setup no longer "succeeds" with zero entities when the initial topology
+  fetch fails** (`data_handler.py`). `ApiError`, timeout or a network error on
+  the first `/homesdata` call now raise `ConfigEntryNotReady`, so Home
+  Assistant retries the setup with backoff. The check runs before any listener
+  is registered and before the platforms are forwarded, and `hass.data` is
+  cleaned up, so a failed attempt leaves nothing behind. An account with no
+  homes and no error still sets up normally.
+- **Webhook registration is retried** (`__init__.py`) with exponential
+  backoff (30 s ... 15 min cap) instead of staying unregistered until the next
+  restart. The first failure is logged at ERROR, later ones at WARNING; the
+  pending retry is cancelled on unload, manual `register_webhook` /
+  `unregister_webhook`. Re-registering no longer raises "Handler is already
+  defined".
+- Cloud connection and `EVENT_HOMEASSISTANT_STARTED` listeners are now
+  removed on unload (previously leaked across reloads).
+
+### Added in 1.6.1
+
+- `tests/`, `pytest.ini` and `requirements_test.txt` (pytest-homeassistant-custom-component).
+
 ## [1.6.0] — 2026-09-27
 
 Prep release for listing in official HACS/community channels. No user-facing

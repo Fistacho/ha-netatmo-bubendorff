@@ -97,6 +97,7 @@ from homeassistant.core import (
     Event,
     HomeAssistant,
     ServiceCall,
+    callback,
 )
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import (
@@ -144,6 +145,11 @@ CONFIG_SCHEMA = vol.Schema(
 )
 
 MAX_WEBHOOK_RETRIES = 3
+
+# Webhook registration is retried with exponential backoff when the Netatmo
+# API is down: 30 s, 60 s, 120 s ... capped at 15 min.
+WEBHOOK_RETRY_BASE_DELAY = 30
+WEBHOOK_RETRY_MAX_DELAY = 900
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -242,11 +248,49 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     data_handler = NetatmoDataHandler(hass, entry)
     hass.data[DOMAIN][entry.entry_id][DATA_HANDLER] = data_handler
-    await data_handler.async_setup()
+    try:
+        await data_handler.async_setup()
+    except BaseException:
+        # ConfigEntryNotReady (Netatmo outage) makes HA call us again from
+        # scratch; do not leave a half-initialised entry behind.
+        hass.data[DOMAIN].pop(entry.entry_id, None)
+        raise
+
+    webhook_retry: dict[str, Any] = {"attempt": 0, "cancel": None}
+
+    @callback
+    def cancel_webhook_retry() -> None:
+        """Cancel a pending webhook registration retry (if any)."""
+        if (cancel := webhook_retry["cancel"]) is not None:
+            webhook_retry["cancel"] = None
+            cancel()
+
+    entry.async_on_unload(cancel_webhook_retry)
+
+    async def retry_webhook_registration(now: datetime) -> None:
+        webhook_retry["cancel"] = None  # the timer has just fired
+        await register_webhook(None)
+
+    @callback
+    def schedule_webhook_retry() -> None:
+        delay = min(
+            WEBHOOK_RETRY_BASE_DELAY * 2 ** webhook_retry["attempt"],
+            WEBHOOK_RETRY_MAX_DELAY,
+        )
+        webhook_retry["attempt"] += 1
+        webhook_retry["cancel"] = async_call_later(
+            hass, delay, retry_webhook_registration
+        )
+        _LOGGER.debug(
+            "Netatmo webhook registration will be retried in %s s (attempt %s)",
+            delay,
+            webhook_retry["attempt"],
+        )
 
     async def unregister_webhook(
         call_or_event_or_dt: ServiceCall | Event | datetime | None,
     ) -> None:
+        cancel_webhook_retry()
         if CONF_WEBHOOK_ID not in entry.data:
             return
         _LOGGER.debug("Unregister Netatmo webhook (%s)", entry.data[CONF_WEBHOOK_ID])
@@ -284,6 +328,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             )
             return
 
+        cancel_webhook_retry()  # a manual call supersedes a pending retry
+
+        # Re-registering (retry / manual service call) must not raise
+        # "Handler is already defined"; unregister is a no-op when absent.
+        webhook_unregister(hass, entry.data[CONF_WEBHOOK_ID])
         webhook_register(
             hass,
             DOMAIN,
@@ -295,9 +344,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         try:
             await hass.data[DOMAIN][entry.entry_id][AUTH].async_addwebhook(webhook_url)
             _LOGGER.info("Register Netatmo webhook: %s", webhook_url)
-        except pyatmo.ApiError as err:
-            _LOGGER.error("Error during webhook registration - %s", err)
+        except (pyatmo.ApiError, aiohttp.ClientError) as err:
+            if webhook_retry["attempt"] == 0:
+                _LOGGER.error(
+                    "Error during webhook registration - %s "
+                    "(will keep retrying in the background)",
+                    err,
+                )
+            else:
+                _LOGGER.warning(
+                    "Netatmo webhook registration retry failed - %s", err
+                )
+            schedule_webhook_retry()
         else:
+            webhook_retry["attempt"] = 0
             entry.async_on_unload(
                 hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, unregister_webhook)
             )
@@ -313,12 +373,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if cloud.async_active_subscription(hass):
         if cloud.async_is_connected(hass):
             await register_webhook(None)
-        cloud.async_listen_connection_change(hass, manage_cloudhook)
+        entry.async_on_unload(
+            cloud.async_listen_connection_change(hass, manage_cloudhook)
+        )
 
     elif hass.state == CoreState.running:
         await register_webhook(None)
     else:
-        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, register_webhook)
+        entry.async_on_unload(
+            hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, register_webhook)
+        )
 
     hass.services.async_register(DOMAIN, "register_webhook", register_webhook)
     hass.services.async_register(DOMAIN, "unregister_webhook", unregister_webhook)

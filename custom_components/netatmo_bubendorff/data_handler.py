@@ -10,11 +10,13 @@ import logging
 from time import time
 from typing import Any
 
+import aiohttp
 import pyatmo
 from pyatmo.modules.device_types import DeviceCategory as NetatmoDeviceCategory
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.dispatcher import (
     async_dispatcher_connect,
     async_dispatcher_send,
@@ -131,9 +133,34 @@ class NetatmoDataHandler:
         self.publisher: dict[str, NetatmoPublisher] = {}
         self._queue: deque = deque()
         self._webhook: bool = False
+        # Publishers whose most recent fetch failed with a transient API error
+        # (ApiError / timeout). NoDevice is NOT a failure: it is a valid answer.
+        self._failed_fetches: dict[str, str] = {}
 
     async def async_setup(self) -> None:
-        """Set up the Netatmo data handler."""
+        """Set up the Netatmo data handler.
+
+        Raises ConfigEntryNotReady when the initial topology cannot be fetched
+        (Netatmo outage, timeout, network error) so Home Assistant retries the
+        whole setup with backoff instead of leaving a loaded entry with zero
+        entities. This happens BEFORE any listener is registered and before the
+        platforms are forwarded, so a failed attempt leaves nothing behind.
+        An account that legitimately has no homes (no error) still sets up.
+        """
+        self.account = pyatmo.AsyncAccount(self._auth)
+
+        try:
+            await self.subscribe(ACCOUNT, ACCOUNT, None)
+        except aiohttp.ClientError as err:
+            raise ConfigEntryNotReady(
+                f"Netatmo API is unreachable: {err}"
+            ) from err
+
+        if reason := self._failed_fetches.get(ACCOUNT):
+            raise ConfigEntryNotReady(
+                f"Netatmo topology could not be fetched: {reason}"
+            )
+
         self.config_entry.async_on_unload(
             async_track_time_interval(
                 self.hass, self.async_update, timedelta(seconds=SCAN_INTERVAL)
@@ -147,10 +174,6 @@ class NetatmoDataHandler:
                 self.handle_event,
             )
         )
-
-        self.account = pyatmo.AsyncAccount(self._auth)
-
-        await self.subscribe(ACCOUNT, ACCOUNT, None)
 
         await self.hass.config_entries.async_forward_entry_setups(
             self.config_entry, PLATFORMS
@@ -203,13 +226,19 @@ class NetatmoDataHandler:
 
         except pyatmo.NoDevice as err:
             _LOGGER.debug(err)
+            self._failed_fetches.pop(signal_name, None)
 
         except pyatmo.ApiError as err:
             _LOGGER.debug(err)
+            self._failed_fetches[signal_name] = str(err)
 
         except asyncio.TimeoutError as err:
             _LOGGER.debug(err)
+            self._failed_fetches[signal_name] = f"timeout: {err}"
             return
+
+        else:
+            self._failed_fetches.pop(signal_name, None)
 
         for update_callback in self.publisher[signal_name].subscriptions:
             if update_callback:

@@ -1,0 +1,42 @@
+# Test dependencies for netatmo_bubendorff (unpinned on purpose: the pinned set
+# is dictated by the installed pytest-homeassistant-custom-component / HA).
+pytest-homeassistant-custom-component
+
+# Imported by the integration and its vendored pyatmo (custom_components/
+# netatmo_bubendorff/pyatmo uses oauthlib / requests-oauthlib / requests).
+oauthlib
+requests
+requests-oauthlib
+
+# Requirements of the HA components loaded by the integration's module-level
+# `homeassistant.components.cloud` import (cloud -> assist_pipeline, conversation,
+# tts, backup, bluetooth, usb, hassio, camera, ffmpeg, matter), taken from their
+# manifest.json files. Without them collection fails with ModuleNotFoundError.
+hass-nabucasa
+openai
+hassil
+home-assistant-intents
+gazetteer-matcher
+mutagen
+cronsim
+securetar
+aiohasupervisor
+aiousbwatcher
+serialx
+ha-ffmpeg
+PyTurboJPEG
+bleak
+bleak-retry-connector
+bluetooth-adapters
+bluetooth-auto-recovery
+bluetooth-data-tools
+habluetooth
+dbus-fast
+matter-ble-proxy
+matter-python-client
+
+# Deliberately NOT listed: pymicro-vad and pyspeex-noise (assist_pipeline). They
+# publish no Windows wheels; tests/conftest.py stubs them when not importable.
+# On Linux CI install them additionally if you prefer the real packages.
+# Windows only: HA imports POSIX-only `fcntl` and `resource`; provide trivial
+# local stubs in the venv (not shipped, not part of the repo).
