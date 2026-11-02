@@ -106,7 +106,8 @@ class NetatmoOptionsFlowHandler(config_entries.OptionsFlow):
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize Netatmo options flow."""
-        self.config_entry = config_entry
+        # `self.config_entry` is a read-only property set by the flow manager
+        # (HA >= 2025.12); assigning it raises AttributeError.
         self.options = dict(config_entry.options)
         self.options.setdefault(CONF_WEATHER_AREAS, {})
 
