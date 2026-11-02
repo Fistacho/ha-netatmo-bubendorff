@@ -3,6 +3,30 @@
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.6.2] — 2026-11-02
+
+Config flow fixes for current Home Assistant (seen live on HA 2026.10.4). No
+change to `unique_id` / `entity_id`, no change to devices or entities.
+
+### Fixed in 1.6.2
+
+- **Options flow ("Configure") no longer crashes** (`config_flow.py`). Since
+  HA 2025.12 `OptionsFlow.config_entry` is a read-only property set by the
+  flow manager; the handler assigned it in `__init__` and raised
+  `AttributeError: property 'config_entry' ... has no setter`.
+- **Abort messages are shown as text instead of raw keys**
+  (`translations/*.json`). Adding the integration a second time showed
+  `single_instance_allowed`; the `config.abort` strings
+  (`single_instance_allowed`, `authorize_url_timeout`,
+  `missing_configuration`, `no_url_available`, `reauth_successful`) are now
+  translated in en, pl, de, fr and es.
+
+### Added in 1.6.2
+
+- `tests/test_config_flow.py` (options flow through the real flow manager) and
+  `tests/test_translations.py` (every `config.abort` key of `strings.json`
+  present in each translation).
+
 ## [1.6.1] — 2026-10-01
 
 Self-healing after a transient Netatmo outage. Incident: HA restarted while
