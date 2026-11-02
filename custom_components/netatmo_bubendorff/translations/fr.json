@@ -12,6 +12,13 @@
     },
     "error": {
       "auth": "Identifiant ou mot de passe erroné."
+    },
+    "abort": {
+      "single_instance_allowed": "Déjà configuré. Une seule configuration possible.",
+      "authorize_url_timeout": "Délai dépassé lors de la génération de l'URL d'autorisation.",
+      "missing_configuration": "Le composant n'est pas configuré. Veuillez suivre la documentation.",
+      "no_url_available": "Aucune URL disponible. Pour plus d'informations sur cette erreur, consultez la section d'aide : {docs_url}",
+      "reauth_successful": "La ré-authentification a réussi."
     }
   },
   "options": {

@@ -12,6 +12,13 @@
     },
     "error": {
       "auth": "Benutzername oder Passwort ist falsch."
+    },
+    "abort": {
+      "single_instance_allowed": "Bereits konfiguriert. Nur eine einzige Konfiguration möglich.",
+      "authorize_url_timeout": "Zeitüberschreitung beim Erstellen der Autorisierungs-URL.",
+      "missing_configuration": "Die Komponente ist nicht konfiguriert. Bitte folge der Dokumentation.",
+      "no_url_available": "Keine URL verfügbar. Informationen zu diesem Fehler findest du im Hilfebereich: {docs_url}",
+      "reauth_successful": "Die erneute Authentifizierung war erfolgreich."
     }
   },
   "options": {

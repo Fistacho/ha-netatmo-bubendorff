@@ -12,6 +12,13 @@
     },
     "error": {
       "auth": "Nieprawidłowa nazwa użytkownika lub hasło."
+    },
+    "abort": {
+      "single_instance_allowed": "Już skonfigurowano. Możliwa jest tylko jedna konfiguracja.",
+      "authorize_url_timeout": "Upłynął limit czasu generowania adresu URL autoryzacji.",
+      "missing_configuration": "Komponent nie jest skonfigurowany. Postępuj zgodnie z dokumentacją.",
+      "no_url_available": "Brak dostępnego adresu URL. Informacje o tym błędzie znajdziesz w sekcji pomocy: {docs_url}",
+      "reauth_successful": "Ponowne uwierzytelnienie powiodło się."
     }
   },
   "options": {

@@ -12,6 +12,13 @@
     },
     "error": {
       "auth": "Usuario o contraseña incorrectos."
+    },
+    "abort": {
+      "single_instance_allowed": "Ya está configurado. Solo es posible una única configuración.",
+      "authorize_url_timeout": "Tiempo de espera agotado al generar la URL de autorización.",
+      "missing_configuration": "El componente no está configurado. Por favor, sigue la documentación.",
+      "no_url_available": "No hay ninguna URL disponible. Para más información sobre este error, consulta la sección de ayuda: {docs_url}",
+      "reauth_successful": "La reautenticación se realizó correctamente."
     }
   },
   "options": {
