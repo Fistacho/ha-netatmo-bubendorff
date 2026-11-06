@@ -29,6 +29,7 @@ body:
     attributes:
       label: How did you install the integration?
       options:
+        - Marketplace, added from link (Home Assistant 2026.11+)
         - HACS custom repository
         - Manual copy into custom_components
     validations:

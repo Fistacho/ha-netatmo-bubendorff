@@ -1,12 +1,18 @@
 # Netatmo (Bubendorff Fistacho) — Home Assistant integration
 
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![Marketplace / HACS Custom](https://img.shields.io/badge/Marketplace%20%7C%20HACS-Custom-orange.svg)](https://www.home-assistant.io/integrations/marketplace/#custom-repositories)
 [![Release](https://img.shields.io/github/v/release/Fistacho/ha-netatmo-bubendorff?sort=semver)](https://github.com/Fistacho/ha-netatmo-bubendorff/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/Fistacho/ha-netatmo-bubendorff)](https://github.com/Fistacho/ha-netatmo-bubendorff/issues)
-[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.1%2B-41BDF5.svg)](https://www.home-assistant.io/)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.8%2B-41BDF5.svg)](https://www.home-assistant.io/)
+
+<!-- ha-marketplace:exclude-start -->
+[![Open in the Marketplace](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=Fistacho&repository=ha-netatmo-bubendorff&category=integration)
+(Home Assistant 2026.11+)
 
 [![Add to HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Fistacho&repository=ha-netatmo-bubendorff&category=integration)
+(HACS on Home Assistant 2026.10 and older — on 2026.11+ this link opens the Marketplace too)
+<!-- ha-marketplace:exclude-end -->
 
 A patched fork of the official [Home Assistant Netatmo](https://www.home-assistant.io/integrations/netatmo) integration that adds **jalousie / tilted slats control** for Bubendorff roller shutters (iDiamant with Netatmo).
 
@@ -39,12 +45,46 @@ Values like `30%` or `75%` are rejected by the hardware. Exposing a 0-100 slider
 
 ## Installation
 
-### Via HACS (recommended)
+Requires **Home Assistant 2026.8.0 or newer**.
+
+<!-- ha-marketplace:exclude-start -->
+### Via the Marketplace (Home Assistant 2026.11+, recommended)
+
+Since 2026.11, HACS is built into Home Assistant as the
+[Marketplace](https://www.home-assistant.io/integrations/marketplace/). This
+repository is not in the default catalog, so add it from a link (a *custom
+repository*):
+
+1. **Settings → Marketplace**. The first time, read the notice and accept it —
+   until you do, the Marketplace can't install or update anything.
+2. Upper-right corner → **Add from link**.
+3. **GitHub link:** `https://github.com/Fistacho/ha-netatmo-bubendorff`
+   (or `Fistacho/ha-netatmo-bubendorff`), type **Integration** → **Add**.
+   Adding a custom repository needs a GitHub connection; the Marketplace asks
+   you to connect (GitHub device sign-in) if you haven't yet.
+4. Open **Netatmo (Bubendorff Fistacho)** → **Install**. On a first install
+   the setup flow opens right away, no restart needed — continue with
+   [Configure](#configure).
+
+Updates show up under **Settings → Updates** as
+`update.netatmo_bubendorff_fistacho_update`. For custom repositories the
+Marketplace checks GitHub every 48 hours, and only with a GitHub connection.
+After an update, restart Home Assistant (a repair offers the restart).
+
+**Upgrading from HACS:** nothing to do. When Home Assistant 2026.11 starts for
+the first time, the Marketplace migrates HACS — this custom repository, the
+installed version and the update entity (same entity ID) carry over.
+
+### Via HACS (Home Assistant 2026.10 and older)
 
 1. HACS → Integrations → ⋮ → **Custom repositories**
 2. Add `https://github.com/Fistacho/ha-netatmo-bubendorff` as type **Integration**
 3. Install **Netatmo (Bubendorff Fistacho)**
 4. Restart Home Assistant
+
+HACS can't be installed on Home Assistant 2026.11 or newer — use the
+Marketplace there.
+<!-- ha-marketplace:exclude-end -->
 
 ### Manual
 
@@ -110,7 +150,7 @@ automatically when you first add the integration):
 | --- | --- | --- |
 | "Invalid redirect URI" | Redirect URI missing in Netatmo app | Step 1.4 — add the URI and Save |
 | Loops back to login | Netatmo session cache | Log out at dev.netatmo.com, retry |
-| "Integration not found" | HACS not restarted | Restart HA after HACS install |
+| "Integration not found" | HA not restarted after a HACS / manual install | Restart HA (on 2026.11+ a first Marketplace install needs no restart; an update does) |
 | No shutters visible | Devices not in the Netatmo home | Check Netatmo mobile app — confirm Bubendorff is paired |
 | `update.*_update` shows version but no entities | Config entry needs reload | **Settings → Devices & Services → Netatmo (Bubendorff Fistacho) → ⋮ → Reload** |
 
