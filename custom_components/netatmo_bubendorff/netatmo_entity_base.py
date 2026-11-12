@@ -103,10 +103,16 @@ class NetatmoBase(Entity):
         else:
             netatmo_device = getattr(NetatmoDeviceType, self._model)
         manufacturer, model = DEVICE_DESCRIPTION_MAP[netatmo_device]
+        # Several entities share one device (a shutter's cover and its
+        # "Radio" / "Reachability" sensors). Only entities that know the
+        # device name may set it: an empty name would overwrite the one set
+        # by the cover on every start and leave the device (and, on HA
+        # 2026.10+, the entity friendly_name) without a name.
+        name = {"name": self._device_name} if self._device_name else {}
         return DeviceInfo(
             configuration_url=self._config_url,
             identifiers={(DOMAIN, self._id)},
-            name=self._device_name,
             manufacturer=manufacturer,
             model=model,
+            **name,
         )

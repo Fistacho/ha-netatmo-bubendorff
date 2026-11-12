@@ -579,7 +579,12 @@ class NetatmoSensor(NetatmoBase, SensorEntity):
     @callback
     def async_update_callback(self) -> None:
         """Update the entity's state."""
-        if (state := getattr(self._module, self.entity_description.key)) is None:
+        if (
+            state := getattr(
+                self._module,
+                self.entity_description.netatmo_name or self.entity_description.key,
+            )
+        ) is None:
             return
 
         self._attr_native_value = state
