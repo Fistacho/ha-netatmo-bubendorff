@@ -85,6 +85,12 @@ class NetatmoCover(NetatmoBase, CoverEntity):
         | CoverEntityFeature.CLOSE_TILT
     )
     _attr_device_class = CoverDeviceClass.SHUTTER
+    # The cloud never reports tilt and only reports 0 / 100, so the state is
+    # partly optimistic. assumed_state also keeps every cover button enabled
+    # in the frontend (open, close and tilt are always allowed, as in the
+    # manufacturer app) -- which is_closed=None did not achieve, because the
+    # frontend disables buttons from current_position / current_tilt_position.
+    _attr_assumed_state = True
 
     def __init__(
         self,
@@ -117,14 +123,27 @@ class NetatmoCover(NetatmoBase, CoverEntity):
         )
         self._attr_unique_id = f"{self._id}-{self._model}"
 
-        # Restore target_position from the persistent store. Netatmo cloud
-        # never returns -2 after a tilt command, so this is the only way to
-        # remember tilt state across HA restarts.
-        persisted = self._store.get(self.entity_id_stub)
-        if persisted is not None:
-            self._cover.target_position = persisted
+        # Last target commanded from HA (0, 100, -1, -2), persisted in the
+        # store. Kept here, not only in pyatmo: every /homestatus poll
+        # overwrites the module's target_position with the cloud's value,
+        # and the cloud never reports -2.
+        self._target: int | None = self._cover.target_position
+        # current_position seen in the previous poll (None until the first
+        # poll after start); a change of it tells an outside move.
+        self._last_api_pos: int | None = None
 
         self._sync_state()
+
+    async def async_added_to_hass(self) -> None:
+        """Restore the persisted target, then subscribe and refresh."""
+        # Restored here because the store is keyed by entity_id, which is
+        # only known once the entity is registered (in __init__ the key fell
+        # back to unique_id and never matched, so tilt was never restored).
+        persisted = self._store.get(self.entity_id_stub)
+        if persisted is not None:
+            self._target = persisted
+            self._cover.target_position = persisted
+        await super().async_added_to_hass()
 
     @property
     def entity_id_stub(self) -> str:
@@ -139,7 +158,7 @@ class NetatmoCover(NetatmoBase, CoverEntity):
         Bubendorff firmware rejects OPEN from jalousie (-2) state — must
         close_tilt first to flatten slats, then chain the original command.
         """
-        if self._cover.target_position == SHUTTER_POSITION_PREFERRED:
+        if self._target == SHUTTER_POSITION_PREFERRED:
             _LOGGER.debug("Leaving jalousie before next move: flattening slats")
             await self._cover.async_close_tilt()
             await asyncio.sleep(2)
@@ -172,20 +191,45 @@ class NetatmoCover(NetatmoBase, CoverEntity):
 
     @callback
     def async_update_callback(self) -> None:
-        """Update entity state from a webhook push or poll cycle."""
+        """Update entity state from a poll of /homestatus.
+
+        The cloud reports an NBO shutter only as 0 or 100 and a tilted one
+        as 0 (or a stale 100), never -2. So while HA's target is the tilt it
+        is kept, unless the API shows the shutter moving to fully open
+        (remote, app, schedule). A close from outside cannot be told apart
+        from the tilt (both report 0) and keeps showing "tilted".
+        """
         api_pos = self._cover.current_position
         if api_pos in (SHUTTER_POSITION_CLOSED, SHUTTER_POSITION_OPEN):
-            # Shutter physically hit a hard limit — clear any stale tilt state.
-            self._cover.target_position = int(api_pos)
-            self.hass.async_create_task(
-                self._store.async_update(self.entity_id_stub, int(api_pos))
-            )
+            api_pos = int(api_pos)
+            if self._target == SHUTTER_POSITION_PREFERRED:
+                if api_pos == SHUTTER_POSITION_OPEN and self._last_api_pos not in (
+                    None,
+                    SHUTTER_POSITION_OPEN,
+                ):
+                    self._set_target(api_pos)
+            elif self._target != api_pos:
+                # Open / closed / stopped follow the reported end position.
+                self._set_target(api_pos)
+            self._last_api_pos = api_pos
+        # pyatmo just overwrote it with the cloud's target_position.
+        self._cover.target_position = self._target
         self._sync_state()
+        self.async_write_ha_state()
 
     # ---- helpers ----
 
+    @callback
+    def _set_target(self, target_position: int) -> None:
+        """Take a target reported by the API and persist it."""
+        self._target = target_position
+        self.hass.async_create_task(
+            self._store.async_update(self.entity_id_stub, target_position)
+        )
+
     async def _commit(self, target_position: int) -> None:
         """Optimistically update state, persist, and notify HA."""
+        self._target = target_position
         self._cover.target_position = target_position
         if target_position in (SHUTTER_POSITION_OPEN, SHUTTER_POSITION_CLOSED):
             self._cover.current_position = target_position
@@ -195,7 +239,7 @@ class NetatmoCover(NetatmoBase, CoverEntity):
 
     def _sync_state(self) -> None:
         """Rebuild HA-visible attributes from pyatmo fields."""
-        target = getattr(self._cover, "target_position", None)
+        target = self._target
         api_pos = getattr(self._cover, "current_position", None)
         in_tilt = target == SHUTTER_POSITION_PREFERRED
 
@@ -204,13 +248,16 @@ class NetatmoCover(NetatmoBase, CoverEntity):
             else None
         )
         self._attr_current_cover_tilt_position = 100 if in_tilt else 0
-        # Keep state unknown so HA never disables any button — Netatmo API
-        # reports only 0/100 and never tilt, so any state-based disabling
-        # would be based on stale/wrong data. Matches manufacturer app behaviour.
-        self._attr_is_closed = None
+        intended_state = _describe_state(api_pos, target)
+        # HA semantics: "closed" means fully closed. Tilted slats and a
+        # stopped (partly open) shutter are "open"; no data means unknown.
+        self._attr_is_closed = (
+            None if intended_state == STATE_UNKNOWN
+            else intended_state == STATE_CLOSED
+        )
 
         self._attr_extra_state_attributes = {
-            "intended_state": _describe_state(api_pos, target),
+            "intended_state": intended_state,
             "netatmo_current_position": api_pos,
             "netatmo_target_position": target,
         }

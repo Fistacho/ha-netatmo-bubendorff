@@ -3,6 +3,56 @@
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.6.3] — 2026-11-11
+
+Shutter state and names (seen live on HA 2026.11.1: all four shutters
+`unknown`, shutters 2–4 without any name). No change to `unique_id` /
+`entity_id`.
+
+### Fixed in 1.6.3
+
+- **Shutter devices no longer lose their name on every start**
+  (`netatmo_entity_base.py`). The disabled "Radio" / "Reachability" sensors
+  share the shutter's device and sent `DeviceInfo(name="")`, overwriting the
+  name set by the cover. Since HA 2026.10 the legacy friendly name is built
+  from the device name, so the covers ended up with no `friendly_name`.
+  Entities without a device name no longer send one. The device name and the
+  entity names come back after the first restart with 1.6.3; names set by the
+  user (`name_by_user`) are untouched.
+- **Covers report `open` / `closed` instead of `unknown`** (`cover.py`).
+  `is_closed` was always `None` (1.5.1) so that no button would be greyed out,
+  but the frontend greys buttons out from `current_position` /
+  `current_tilt_position` anyway. `is_closed` now follows `intended_state`
+  (`closed` → closed; `open`, `tilted`, `stopped` → open; no data → unknown)
+  and the cover sets `assumed_state`, which keeps open, close and both tilt
+  buttons enabled at all times, as in the manufacturer app.
+- **Tilt (jalousie) is no longer lost after 30 seconds** (`cover.py`). The
+  cloud reports an NBO shutter only as 0 / 100 and never -2, and every
+  `/homestatus` poll (30 s) reset the target to that value and wrote it to
+  the store. The tilt commanded from HA is now kept until the API shows the
+  shutter moving to fully open (remote, app, schedule) or HA sends another
+  command. A close from outside reports 0, exactly like the tilt, so it
+  cannot be detected and the cover keeps showing `tilted` until the next
+  command.
+- **Tilt survives a restart** (`cover.py`). The persisted target was read
+  under the `unique_id` key (in `__init__`, before the `entity_id` exists)
+  but written under the `entity_id` key, so it was never restored. It is
+  now restored in `async_added_to_hass`. Existing stored values are kept.
+- **Polls update the cover in HA** (`cover.py`). The poll callback updated
+  the entity but never wrote its state, so a move from outside HA showed up
+  only after a restart or reload.
+- **"Radio" sensor of a shutter no longer fails when enabled**
+  (`sensor.py`). It read the attribute `rf_status`, which the module does
+  not have, instead of `rf_strength`.
+
+### Added in 1.6.3
+
+- `tests/test_cover.py`: device name after the shutter's sensors are added,
+  state from the reported position, state after commands, unavailable when
+  `reachable` is false, tilt kept through polls (from closed and from open),
+  tilt left by close / open from HA, tilt left when opened from outside,
+  tilt after a restart, "Radio" sensor value.
+
 ## [1.6.2] — 2026-11-02
 
 Config flow fixes for current Home Assistant (seen live on HA 2026.10.4). No
